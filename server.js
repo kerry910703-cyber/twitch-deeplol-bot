@@ -7,7 +7,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // 改你的 Riot ID
-const RIOT_ID = "rrrrr#wywq";
+const RIOT_ID = "Velja#2203";
 
 app.get("/game", async (req, res) => {
   try {
