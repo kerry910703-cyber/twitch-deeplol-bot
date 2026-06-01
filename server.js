@@ -4,16 +4,17 @@ const axios = require("axios");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-/*
-  改這裡
-  每次只要更新 match_id 即可
-*/
+// ===== 你的 Deeplol API =====
 const API_URL =
   "https://b2c-api-cdn.deeplol.gg/ingame/ingame_info" +
-  "?puu_id=v3qG__KqIOwFUaBawNX-V4EwtyJOOK4esqId0wUmnFsxPO4_k5_JejonOCnp6Ln4vYRzlKjtjeG7Ig" +
+  "?puu_id=hMA6bpw0bJdUiH9dDK87HZ0Fjr1IyUwNBLtmIqbVDK5bdIUMKfze6qP3TAZz8UNwKLBnund1W7_q_Q" +
   "&platform_id=KR" +
   "&season=27" +
-  "&match_id=8240653117";
+  "&match_id=8240667986";
+// ===========================
+
+// 你的 Riot 名稱（拿來排除自己）
+const MY_NAME = "你的Riot名字";
 
 app.get("/", (req, res) => {
   res.send("deeplol bot running");
@@ -52,17 +53,25 @@ app.get("/game", async (req, res) => {
         (info.status || "")
           .toLowerCase();
 
+      const riotName =
+        p.riot_id_name ||
+        info.name ||
+        "未知玩家";
+
+      // 排除自己
+      if (
+        riotName.toLowerCase() ===
+        MY_NAME.toLowerCase()
+      ) {
+        continue;
+      }
+
       if (
         status === "pro" ||
         status === "streamer"
       ) {
-        const name =
-          p.riot_id_name ||
-          info.name ||
-          "未知玩家";
-
         found.push(
-          `${name}(${status.toUpperCase()})`
+          `${riotName}(${status.toUpperCase()})`
         );
       }
     }
