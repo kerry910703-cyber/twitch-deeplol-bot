@@ -4,7 +4,6 @@ const axios = require("axios");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// 改你的帳號
 const RIOT_NAME = "Velja";
 const RIOT_TAG = "2203";
 const REGION = "KR";
@@ -19,15 +18,23 @@ app.get("/game", async (req, res) => {
 
     const response = await axios.get(url, {
       headers: {
-        "User-Agent": "Mozilla/5.0"
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+        "Accept": "application/json",
+        "Referer":
+          `https://www.deeplol.gg/summoner/${REGION.toLowerCase()}/${RIOT_NAME}-${RIOT_TAG}/ingame`,
+        "Origin": "https://www.deeplol.gg"
       }
     });
 
-    // 直接把 API 原始結果吐出來
-    return res.json(response.data);
+    const data = response.data;
+
+    // debug 看實際拿到啥
+    return res.json(data);
 
   } catch (err) {
     console.error(err);
+
     return res.send(
       `ERROR: ${err.message}`
     );
