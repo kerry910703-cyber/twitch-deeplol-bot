@@ -7,7 +7,7 @@ const PORT = process.env.PORT || 3000;
 const RIOT_ID = "Velja#2203";
 const REGION = "kr";
 
-app.get("/game", async (req, res) => {
+app.get("/debug", async (req, res) => {
   let browser;
 
   try {
@@ -25,50 +25,21 @@ app.get("/game", async (req, res) => {
 
     await page.goto(url, {
       waitUntil: "networkidle2",
-      timeout: 30000
+      timeout: 60000
     });
 
-    // 等頁面載入
-    await new Promise(r => setTimeout(r, 3000));
+    await new Promise(r => setTimeout(r, 5000));
 
     const text = await page.evaluate(() => {
       return document.body.innerText;
     });
 
-    const found = [];
-
-    const lines = text.split("\n");
-
-    for (const line of lines) {
-      const clean = line.trim();
-
-      if (!clean) continue;
-
-      if (clean.includes("PRO")) {
-        found.push(clean);
-      }
-
-      if (clean.includes("STR")) {
-        found.push(clean);
-      }
-    }
-
-    const unique = [...new Set(found)];
-
-    if (!unique.length) {
-      return res.send("😴 這把沒撞到 PRO / STR");
-    }
-
-    return res.send(
-      `🚨 本局撞車：${unique.slice(0, 8).join("、")}`
-    );
+    res.type("text/plain");
+    res.send(text.slice(0, 5000));
   } catch (err) {
-    console.error(err);
-    return res.send("抓不到即時對戰");
+    res.send(`ERROR:\n${err.message}`);
   } finally {
-    if (browser) {
-      await browser.close();
-    }
+    if (browser) await browser.close();
   }
 });
 
