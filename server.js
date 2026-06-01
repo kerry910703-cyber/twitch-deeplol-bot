@@ -1,73 +1,74 @@
 const express = require("express");
-const axios = require("axios");
-const cheerio = require("cheerio");
+const puppeteer = require("puppeteer");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// 改你的 Riot ID
 const RIOT_ID = "Velja#2203";
 const REGION = "kr";
 
 app.get("/game", async (req, res) => {
+  let browser;
+
   try {
     const riotId = RIOT_ID.replace("#", "-");
 
-    const url = `https://www.deeplol.gg/summoner/${REGION}/${riotId}/ingame`;
+    const url =
+      `https://www.deeplol.gg/summoner/${REGION}/${riotId}/ingame`;
 
-    const response = await axios.get(url, {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
-      }
+    browser = await puppeteer.launch({
+      headless: true,
+      args: ["--no-sandbox", "--disable-setuid-sandbox"]
     });
 
-    const $ = cheerio.load(response.data);
+    const page = await browser.newPage();
+
+    await page.goto(url, {
+      waitUntil: "networkidle2",
+      timeout: 30000
+    });
+
+    // 等頁面載入
+    await new Promise(r => setTimeout(r, 3000));
+
+    const text = await page.evaluate(() => {
+      return document.body.innerText;
+    });
 
     const found = [];
 
-    // 掃整頁文字
-    $("body *").each((_, el) => {
-      const text = $(el).text().trim();
+    const lines = text.split("\n");
 
-      if (!text) return;
+    for (const line of lines) {
+      const clean = line.trim();
 
-      // 找 "名字 + PRO" 或 "名字 + STR"
-      const proMatch = text.match(
-        /([A-Za-z0-9._\-\s]+)\s*PRO/i
-      );
+      if (!clean) continue;
 
-      const strMatch = text.match(
-        /([A-Za-z0-9._\-\s]+)\s*STR/i
-      );
-
-      if (proMatch?.[1]) {
-        found.push(`${proMatch[1].trim()}(PRO)`);
+      if (clean.includes("PRO")) {
+        found.push(clean);
       }
 
-      if (strMatch?.[1]) {
-        found.push(`${strMatch[1].trim()}(STR)`);
+      if (clean.includes("STR")) {
+        found.push(clean);
       }
-    });
-
-    // 去重複
-    const unique = [...new Set(found)];
-
-    if (unique.length === 0) {
-      return res.send(
-        "😴 這把沒撞到 PRO / STR"
-      );
     }
 
-    res.send(
-      `🚨 本局撞車：${unique.join("、")}`
+    const unique = [...new Set(found)];
+
+    if (!unique.length) {
+      return res.send("😴 這把沒撞到 PRO / STR");
+    }
+
+    return res.send(
+      `🚨 本局撞車：${unique.slice(0, 8).join("、")}`
     );
   } catch (err) {
     console.error(err);
-
-    res.send(
-      "抓不到即時對戰（可能沒在遊戲中）"
-    );
+    return res.send("抓不到即時對戰");
+  } finally {
+    if (browser) {
+      await browser.close();
+    }
   }
 });
 
