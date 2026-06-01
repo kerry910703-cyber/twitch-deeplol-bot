@@ -5,19 +5,15 @@ const cheerio = require("cheerio");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// 測試帳號
+// 改你的 Riot ID
 const RIOT_ID = "Velja#2203";
-const REGION = "kr"; // tw kr euw na jp
+const REGION = "kr";
 
 app.get("/game", async (req, res) => {
   try {
-    // Deeplol 格式：名字#tag -> 名字-tag
-    const formatted = RIOT_ID.replace("#", "-");
-    const encoded = encodeURIComponent(formatted);
+    const riotId = RIOT_ID.replace("#", "-");
 
-    const url = `https://www.deeplol.gg/summoner/${REGION}/${encoded}`;
-
-    console.log("Checking:", url);
+    const url = `https://www.deeplol.gg/summoner/${REGION}/${riotId}/ingame`;
 
     const response = await axios.get(url, {
       headers: {
@@ -28,40 +24,50 @@ app.get("/game", async (req, res) => {
 
     const $ = cheerio.load(response.data);
 
-    const bodyText = $("body").text();
+    const found = [];
 
-    const keywords = [
-      "Streamer",
-      "Pro",
-      "LCK",
-      "LPL",
-      "LEC",
-      "LCS",
-      "PCS",
-      "T1",
-      "GEN",
-      "DK",
-      "KT"
-    ];
+    // 掃整頁文字
+    $("body *").each((_, el) => {
+      const text = $(el).text().trim();
 
-    let found = [];
+      if (!text) return;
 
-    keywords.forEach(word => {
-      if (bodyText.includes(word)) {
-        found.push(word);
+      // 找 "名字 + PRO" 或 "名字 + STR"
+      const proMatch = text.match(
+        /([A-Za-z0-9._\-\s]+)\s*PRO/i
+      );
+
+      const strMatch = text.match(
+        /([A-Za-z0-9._\-\s]+)\s*STR/i
+      );
+
+      if (proMatch?.[1]) {
+        found.push(`${proMatch[1].trim()}(PRO)`);
+      }
+
+      if (strMatch?.[1]) {
+        found.push(`${strMatch[1].trim()}(STR)`);
       }
     });
 
-    found = [...new Set(found)];
+    // 去重複
+    const unique = [...new Set(found)];
 
-    if (found.length === 0) {
-      return res.send("這把目前沒撞到已標記選手/實況主 😴");
+    if (unique.length === 0) {
+      return res.send(
+        "😴 這把沒撞到 PRO / STR"
+      );
     }
 
-    res.send(`🚨 本局撞車：${found.join("、")}`);
+    res.send(
+      `🚨 本局撞車：${unique.join("、")}`
+    );
   } catch (err) {
-    console.error(err.message);
-    res.send("目前抓不到對戰資料");
+    console.error(err);
+
+    res.send(
+      "抓不到即時對戰（可能沒在遊戲中）"
+    );
   }
 });
 
