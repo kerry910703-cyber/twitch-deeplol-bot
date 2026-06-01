@@ -11,10 +11,10 @@ const API_URL =
   "&platform_id=KR" +
   "&season=27" +
   "&match_id=8240667986";
-// ===========================
 
-// 你的 Riot 名稱（拿來排除自己）
-const MY_NAME = "rrrrr#wywq";
+// ===== 用 puu_id 排除自己 =====
+const MY_PUUID =
+  "hMA6bpw0bJdUiH9dDK87HZ0Fjr1IyUwNBLtmIqbVDK5bdIUMKfze6qP3TAZz8UNwKLBnund1W7_q_Q";
 
 app.get("/", (req, res) => {
   res.send("deeplol bot running");
@@ -44,6 +44,12 @@ app.get("/game", async (req, res) => {
     const found = [];
 
     for (const p of data.participants_list || []) {
+
+      // 排除自己
+      if (p.puu_id === MY_PUUID) {
+        continue;
+      }
+
       const info =
         p?.summoner_data
           ?.summoner_basic_info_dict
@@ -53,23 +59,16 @@ app.get("/game", async (req, res) => {
         (info.status || "")
           .toLowerCase();
 
-      const riotName =
-        p.riot_id_name ||
-        info.name ||
-        "未知玩家";
-
-      // 排除自己
-      if (
-        riotName.toLowerCase() ===
-        MY_NAME.toLowerCase()
-      ) {
-        continue;
-      }
-
+      // 抓 PRO / STREAMER
       if (
         status === "pro" ||
         status === "streamer"
       ) {
+        const riotName =
+          p.riot_id_name ||
+          info.name ||
+          "未知玩家";
+
         found.push(
           `${riotName}(${status.toUpperCase()})`
         );
