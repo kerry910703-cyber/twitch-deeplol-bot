@@ -1,10 +1,13 @@
-browser = await puppeteer.launch({
-  headless: true,
-  executablePath:
-    "/opt/render/.cache/puppeteer/chrome/linux-148.0.7778.97/chrome-linux64/chrome",
-  args: [
-    "--no-sandbox",
-    "--disable-setuid-sandbox",
-    "--disable-dev-shm-usage"
-  ]
-});
+{
+  "name": "twitch-deeplol-bot",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "postinstall": "npx puppeteer browsers install chrome",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "puppeteer": "^24.10.2"
+  }
+}
