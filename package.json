@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
-    "postinstall": "npx puppeteer browsers install chrome",
     "start": "node server.js"
   },
   "dependencies": {
+    "@sparticuz/chromium": "^138.0.2",
     "express": "^4.19.2",
-    "puppeteer": "^24.10.2"
+    "puppeteer-core": "^24.10.2"
   }
 }
