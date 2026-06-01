@@ -14,7 +14,7 @@ const API_URL =
 // ===========================
 
 // 你的 Riot 名稱（拿來排除自己）
-const MY_NAME = "你的Riot名字";
+const MY_NAME = "rrrrr#wywq";
 
 app.get("/", (req, res) => {
   res.send("deeplol bot running");
