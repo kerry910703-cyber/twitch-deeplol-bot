@@ -35,6 +35,7 @@ app.get("/game", async (req, res) => {
 
     const data = response.data;
 
+    // 沒在遊戲
     if (!data?.playing) {
       return res.send(
         "😴 目前不在遊戲中"
@@ -60,6 +61,7 @@ app.get("/game", async (req, res) => {
         (info.status || "")
           .toLowerCase();
 
+      // 只抓 PRO / STREAMER
       if (
         status !== "pro" &&
         status !== "streamer"
@@ -67,14 +69,21 @@ app.get("/game", async (req, res) => {
         continue;
       }
 
-      const riotName =
-        p.riot_id_name ||
-        info.name ||
-        "未知玩家";
+      // ===== 優先顯示職業名稱 =====
+      const displayName =
+        info.championship_name &&
+        info.championship_name !== "-"
+          ? info.championship_name
+          : info.name &&
+            info.name !== "-"
+          ? info.name
+          : p.riot_id_name ||
+            "未知玩家";
 
       const text =
-        `${riotName}(${status.toUpperCase()})`;
+        `${displayName}(${status.toUpperCase()})`;
 
+      // 分藍紅方
       if (p.side === "BLUE") {
         blueFound.push(text);
       } else if (p.side === "RED") {
@@ -88,7 +97,7 @@ app.get("/game", async (req, res) => {
     const red =
       [...new Set(redFound)];
 
-    // 都沒撞
+    // 沒撞車
     if (
       blue.length === 0 &&
       red.length === 0
@@ -104,7 +113,7 @@ app.get("/game", async (req, res) => {
 
   } catch (err) {
 
-    // 沒在遊戲
+    // Deeplol 沒在遊戲時會 500
     if (
       err.response &&
       err.response.status === 500
