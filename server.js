@@ -12,7 +12,7 @@ const API_URL =
   "&season=27" +
   "&match_id=8240667986";
 
-// ===== 用 puu_id 排除自己 =====
+// ===== 排除自己 =====
 const MY_PUUID =
   "hMA6bpw0bJdUiH9dDK87HZ0Fjr1IyUwNBLtmIqbVDK5bdIUMKfze6qP3TAZz8UNwKLBnund1W7_q_Q";
 
@@ -41,7 +41,8 @@ app.get("/game", async (req, res) => {
       );
     }
 
-    const found = [];
+    const blueFound = [];
+    const redFound = [];
 
     for (const p of data.participants_list || []) {
 
@@ -59,39 +60,64 @@ app.get("/game", async (req, res) => {
         (info.status || "")
           .toLowerCase();
 
-      // 抓 PRO / STREAMER
       if (
-        status === "pro" ||
-        status === "streamer"
+        status !== "pro" &&
+        status !== "streamer"
       ) {
-        const riotName =
-          p.riot_id_name ||
-          info.name ||
-          "未知玩家";
+        continue;
+      }
 
-        found.push(
-          `${riotName}(${status.toUpperCase()})`
-        );
+      const riotName =
+        p.riot_id_name ||
+        info.name ||
+        "未知玩家";
+
+      const text =
+        `${riotName}(${status.toUpperCase()})`;
+
+      if (p.side === "BLUE") {
+        blueFound.push(text);
+      } else if (p.side === "RED") {
+        redFound.push(text);
       }
     }
 
-    const unique = [...new Set(found)];
+    const blue =
+      [...new Set(blueFound)];
 
-    if (!unique.length) {
+    const red =
+      [...new Set(redFound)];
+
+    // 都沒撞
+    if (
+      blue.length === 0 &&
+      red.length === 0
+    ) {
       return res.send(
         "😴 這把沒撞到 PRO / STR"
       );
     }
 
     return res.send(
-      `🚨 本局撞車：${unique.join("、")}`
+      `🔵藍方：${blue.length ? blue.join("、") : "無"} | 🔴紅方：${red.length ? red.join("、") : "無"}`
     );
 
   } catch (err) {
+
+    // 沒在遊戲
+    if (
+      err.response &&
+      err.response.status === 500
+    ) {
+      return res.send(
+        "😴 目前不在遊戲中"
+      );
+    }
+
     console.error(err);
 
     return res.send(
-      `ERROR: ${err.message}`
+      "❌ Deeplol API 暫時無法取得資料"
     );
   }
 });
